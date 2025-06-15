@@ -1,41 +1,56 @@
 # Learning Bitcoin from the Command Line - Week 3: Multisig and PSBT
 
 ## Overview
-This week, you'll learn how to create a multisig address and perform a multisig transaction using Partially Signed Bitcoin Transactions (PSBTs). You'll write a bash script to simulate a basic multisig share transfer between two participants, Alice and Bob.
+
+In this third week you will:
+
+1. **Create** three wallets (`Miner`, `Alice`, and `Bob`) and fund them on `regtest`.
+2. **Build** a 2-of-2 P2WSH multisig address from `Alice` and `Bob`’s public keys.
+3. **Craft & broadcast** a *funding* PSBT that funds the multisig with 20 BTC (10 BTC from each party).
+4. **Mine** blocks to confirm funding and **report** balances.
+5. **Craft** a *spending* PSBT that spends the multisig UTXO, splitting 10 BTC back to each party (minus fees).
+6. **Sign** the PSBT in turn with `Alice` and `Bob`, **extract** the final transaction, and **broadcast** it.
+7. **Mine** blocks to confirm spending and **report** final balances.
+8. **Target Locations** for the solution code for each languages are given below:
+   1. Bash: [solution.sh](./bash/solution.sh)
+   2. Javascript: [index.js](./javascript/index.js)
+   3. Python: [main.py](./python/main.py)
+   4. Rust: [main.rs](./rust/src/main.rs)
 
 ## Problem Statement
 
-Multisig transactions are a fundamental aspect of "complex Bitcoin scripting," enabling co-ownership of Bitcoin UTXOs. They play a crucial role in co-custody solutions for Layer 2 (L2) protocols.
+Multisig transactions enable joint control of Bitcoin funds—crucial for co-custody and Layer 2 protocols (e.g., Lightning channels). In this exercise, simulate a simple 2-of-2 multisig share transfer between two participants, Alice and Bob:
 
-L2 protocols commonly initiate by establishing a multisig funding transaction among involved parties. For instance, in Lightning, both parties may co-fund the transaction before conducting their lightning transactions. Upon closing the channel, they can settle the multisig to reclaim their respective shares.
-
-In this exercise, we aim to simulate a basic multisig share transfer between two participants, Alice and Bob.
+1. **Funding phase:** both deposit coins into a 2-of-2 P2WSH address.
+2. **Spending phase:** both sign to split funds back.
 
 ## Solution Requirements
 
-You need to write a bash script that will do the following:
+Implement the following tasks in exactly one of the language-specific directories (`bash`, `javascript`, `python`, or `rust`):
 
-### Setup Multisig
+### Setup Multisig & Funding
 
-1. Create three wallets: `Miner`, `Alice`, and `Bob`.
-2. Fund the wallets by generating some blocks for `Miner` and sending some coins to `Alice` and `Bob`.
-3. Create a 2-of-2 P2WSH Multisig address by combining public keys from `Alice` and `Bob`.
-4. Create a Partially Signed Bitcoin Transaction (PSBT) to fund the multisig address with 20 BTC, taking 10 BTC each from `Alice` and `Bob`, and providing correct change back to each of them.
-5. Confirm the balance by mining a few more blocks.
-6. Print the final balances of `Alice` and `Bob`.
+1. **Create wallets**: `Miner`, `Alice`, `Bob`.
+2. **Fund wallets**: generate blocks to credit `Miner` (≥ 150 BTC), then send 15 BTC each to `Alice` and `Bob`.
+3. **Construct multisig**: fetch `Alice` and `Bob`’s public keys; create a 2-of-2 P2WSH address.
+4. **Build funding PSBT**: to fund the multisig address with 20 BTC, taking 10 BTC each from `Alice` and `Bob`, and providing correct change back to each of them.
+5. **Sign & broadcast** the funding PSBT.
+6. **Mine** 6 blocks to confirm.
+7. **Print balances** of `Alice` and `Bob`.
 
-### Settle Multisig
+### Settle Multisig & Spending
 
-1. Create a PSBT to spend funds from the multisig, ensuring 10 BTC is equally distributed back between `Alice` and `Bob` after accounting for fees.
-2. Sign the PSBT by `Alice`.
-3. Sign the PSBT by `Bob`.
-4. Extract and broadcast the fully signed transaction.
-5. Print the final balances of `Alice` and `Bob`.
+1. **Build spending PSBT** to spend funds from the multisig, ensuring 10 BTC is equally distributed back between `Alice` and `Bob` after accounting for fees.
+2. **Sign PSBT** with `Alice`.
+3. **Sign PSBT** with `Bob`.
+4. **Extract & broadcast** the fully signed transaction.
+5. **Mine** 6 blocks to confirm.
+6. **Print final balances** of `Alice` and `Bob`.
 
 
 ### Output Format
 
-Output the txid of the multisig funding transaction and the txid of the spending transaction to `out.txt`. The file should contain the following structure:
+Write the two resulting txids to a file named `out.txt`, one per line:
 
 ```txt
 <txid_multisig_funding>
@@ -57,36 +72,55 @@ Output the txid of the multisig funding transaction and the txid of the spending
 ## Local Testing
 
 ### Prerequisites
+
+| Language       | Prerequisite packages       |
+| -------------- | --------------------------- |
+| **Bash**       | `jq`, `curl`, `wget`, `tar` |
+| **JavaScript** | Node.js ≥ 20, `npm`         |
+| **Python**     | Python ≥ 3.9                |
+| **Rust**       | Rust stable toolchain       |
+
+
 - Install `jq` tool for parsing JSON data if you don't have it installed.
 - Install Node.js and npm to run the test script.
 - Node version 20 or higher is recommended. You can install Node.js using the following command:
   ```
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
   source ~/.nvm/nvm.sh
-  nvm install 20
+  nvm install --lts
   ```
 - Install the required npm packages by running `npm install`.
 
-### Testing Steps
-- Start your Bitcoin Core node with the `bitcoin.conf` file with the following parameters:
-  ```
-  regtest=1
-  fallbackfee=0.0001
-  server=1
-  rest=1
-  txindex=1
-  rpcauth=alice:88cae77e34048eff8b9f0be35527dd91$d5c4e7ff4dfe771808e9c00a1393b90d498f54dcab0ee74a2d77bd01230cd4cc
-  ```
-- Run your script using the command `/bin/bash solution.sh`.
-- Run the test script using the command `npm run test`.
+### Local Testing Steps
+It's a good idea to run the whole test locally to ensure your code is working properly.
+- Uncomment the specific line in [run.sh](./run.sh) corresponding to your language of choice.
+- Grant execution permission to [test.sh](./test.sh), by running `chmod +x ./test.sh`.
+- Execute `./test.sh`.
 - The test script will run your script and verify the output. If the test script passes, you have successfully completed the challenge and are ready to submit your solution.
 
+> **Note:** There is a pre-cooked setup script available [here](./setup-bitcoin-node.sh) to download and start bitcoind. You may use that script for all local testing purposes.
+
 ### Common Issues
-- Make sure Bitcoin Core is running before running the test script. Your submission should not stop the Bitcoin Core daemon at any point.
-- Make sure your `bitcoin.conf` file is correctly configured with the required parameters.
+- Your submission should not stop the Bitcoin Core daemon at any point.
 - Linux and MacOS are the recommended operating systems for this challenge. If you are using Windows, you may face compatibility issues.
 - The autograder will run the test script on an Ubuntu 22.04 environment. Make sure your script is compatible with this environment.
 - If you are unable to run the test script locally, you can submit your solution and check the results on the Github.
+
+## Submission
+
+- Commit all code inside the appropriate language directory and the modified `run.sh`.
+  ```
+  git add .
+  git commit -m "Week 2 solution"
+  ```
+- Push to the main branch:
+  ```
+    git push origin main
+  ```
+- The autograder will run your script against a test script to verify the functionality.
+- Check the status of the autograder on the Github Classroom portal to see if it passed successfully or failed. Once you pass the autograder with a score of 100, you have successfully completed the challenge.
+- You can submit multiple times before the deadline. The latest submission before the deadline will be considered your final submission.
+- You will lose access to the repository after the deadline.
 
 ## Resources
 
